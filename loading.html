@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nikila's Portfolio - Loading</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background: #0a0e14; cursor: none; }
+        canvas { display: block; }
+        #loading-spinner {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 25px;
+            background: linear-gradient(45deg, #00cc66, #33ff99);
+            clip-path: polygon(25% 0%, 75% 0%, 100% 100%, 0% 100%);
+            animation: spinChaos 1.2s ease-in-out infinite;
+        }
+        @keyframes spinChaos {
+            0% { transform: translateX(-50%) rotate(0deg) scale(1); }
+            50% { transform: translateX(-50%) rotate(180deg) scale(1.2); }
+            100% { transform: translateX(-50%) rotate(360deg) scale(1); }
+        }
+        @media (max-width: 768px) {
+            #loading-spinner { width: 40px; height: 20px; bottom: 10px; }
+            canvas { height: 100vh !important; }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading-spinner"></div>
+    <div id="canvas-container"></div>
+    <script>
+        console.log('Script started');
+
+        function initLoadingPage() {
+            let scene, camera, renderer, composer, character, textMesh;
+
+            // Three.js setup with black background
+            try {
+                scene = new THREE.Scene();
+                scene.background = new THREE.Color(0x0a0e14); // Black background
+                camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                camera.position.set(0, 0, 25); // Further back for throw effect
+                renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setClearColor(0x0a0e14, 1);
+                document.getElementById('canvas-container').appendChild(renderer.domElement);
+                console.log('Renderer initialized');
+            } catch (e) {
+                console.error('Renderer setup failed:', e);
+                return false;
+            }
+
+            // Dynamic lighting and fog
+            try {
+                scene.fog = new THREE.FogExp2(0x0a0e14, 0.05);
+                const ambientLight = new THREE.AmbientLight(0x33ff99, 0.8);
+                scene.add(ambientLight);
+                const pointLight = new THREE.PointLight(0x00cc66, 1.8, 150);
+                pointLight.position.set(Math.random() * 15 - 7.5, Math.random() * 15 - 7.5, 20);
+                scene.add(pointLight);
+                gsap.to(pointLight.position, { x: Math.random() * 15 - 7.5, y: Math.random() * 15 - 7.5, duration: 4, repeat: -1, yoyo: true });
+                console.log('Dynamic lighting added');
+            } catch (e) {
+                console.error('Lighting setup failed:', e);
+            }
+
+            // Postprocessing with enhanced bloom
+            try {
+                composer = new THREE.EffectComposer(renderer);
+                const renderPass = new THREE.RenderPass(scene, camera);
+                composer.addPass(renderPass);
+                const bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 2.5, 0.3, 0.9);
+                bloomPass.threshold = 0.05;
+                composer.addPass(bloomPass);
+                console.log('Postprocessing initialized with enhanced bloom');
+            } catch (e) {
+                console.error('Postprocessing setup failed, falling back to basic rendering:', e);
+                composer = null;
+            }
+
+            // Galaxy background with neural nodes
+            try {
+                const galaxyGeometry = new THREE.BufferGeometry();
+                const galaxyCount = 500;
+                const galaxyPos = new Float32Array(galaxyCount * 3);
+                for (let i = 0; i < galaxyCount * 3; i += 3) {
+                    const r = 20 * Math.sqrt(Math.random());
+                    const theta = Math.random() * 2 * Math.PI;
+                    galaxyPos[i] = r * Math.cos(theta);
+                    galaxyPos[i + 1] = (Math.random() - 0.5) * 10;
+                    galaxyPos[i + 2] = r * Math.sin(theta);
+                }
+                galaxyGeometry.setAttribute('position', new THREE.BufferAttribute(galaxyPos, 3));
+                const galaxyMaterial = new THREE.PointsMaterial({
+                    size: 0.2,
+                    color: 0x33ff99,
+                    transparent: true,
+                    opacity: 0.95,
+                    blending: THREE.AdditiveBlending
+                });
+                const galaxy = new THREE.Points(galaxyGeometry, galaxyMaterial);
+                scene.add(galaxy);
+                gsap.to(galaxy.rotation, { y: Math.PI * 2, duration: 30, repeat: -1, ease: 'linear' });
+
+                const neuralGeometry = new THREE.BufferGeometry();
+                const neuralCount = 30;
+                const neuralPos = new Float32Array(neuralCount * 3);
+                for (let i = 0; i < neuralCount * 3; i += 3) {
+                    neuralPos[i] = (Math.random() - 0.5) * 10;
+                    neuralPos[i + 1] = (Math.random() - 0.5) * 10;
+                    neuralPos[i + 2] = (Math.random() - 0.5) * 10;
+                }
+                neuralGeometry.setAttribute('position', new THREE.BufferAttribute(neuralPos, 3));
+                const neuralMaterial = new THREE.PointsMaterial({
+                    size: 0.3,
+                    color: 0x00cc66,
+                    transparent: true,
+                    opacity: 0.9
+                });
+                const neural = new THREE.Points(neuralGeometry, neuralMaterial);
+                scene.add(neural);
+                gsap.to(neural.scale, { x: 1.5, y: 1.5, z: 1.5, duration: 3, repeat: -1, yoyo: true, ease: 'elastic.out(1, 0.3)' });
+                console.log('Galaxy and neural background added');
+            } catch (e) {
+                console.error('Background setup failed:', e);
+            }
+
+            // Rolling Among Us with text printing and throw
+            try {
+                const loader = new THREE.GLTFLoader();
+                loader.load(
+                    './assets/amongus_green.gltf',
+                    (gltf) => {
+                        console.log('GLTF loaded');
+                        character = gltf.scene;
+                        character.scale.set(3, 3, 3);
+                        character.position.set(-15, 0, 5);
+                        scene.add(character);
+                        rollAndThrow();
+                    },
+                    undefined,
+                    (error) => {
+                        console.error('GLTF error:', error);
+                        const geometry = new THREE.BoxGeometry(1.5, 1.5, 1.5);
+                        const material = new THREE.MeshStandardMaterial({ color: 0x00cc66, roughness: 0.3 });
+                        character = new THREE.Mesh(geometry, material);
+                        character.scale.set(3, 3, 3);
+                        character.position.set(-15, 0, 5);
+                        scene.add(character);
+                        rollAndThrow();
+                        console.log('Using fallback cube');
+                    }
+                );
+            } catch (e) {
+                console.error('GLTF setup failed:', e);
+                const geometry = new THREE.BoxGeometry(1.5, 1.5, 1.5);
+                const material = new THREE.MeshStandardMaterial({ color: 0x00cc66, roughness: 0.3 });
+                character = new THREE.Mesh(geometry, material);
+                character.scale.set(3, 3, 3);
+                character.position.set(-15, 0, 5);
+                scene.add(character);
+                rollAndThrow();
+                console.log('Using fallback cube due to setup error');
+            }
+
+            function rollAndThrow() {
+                const text = "Nikila's Portfolio";
+                let charIndex = 0;
+                gsap.to(character.position, {
+                    x: 15,
+                    z: 20, // Throw out further
+                    duration: 6,
+                    ease: 'power2.out',
+                    onUpdate: () => {
+                        character.rotation.z += 0.25; // Faster roll
+                        if (charIndex < text.length && character.position.x % 1.2 < 0.1) {
+                            const loader = new THREE.FontLoader();
+                            loader.load(
+                                'https://threejs.org/examples/fonts/helvetiker_bold.typeface.json',
+                                (font) => {
+                                    const textGeo = new THREE.TextGeometry(text.slice(0, charIndex + 1), {
+                                        font: font,
+                                        size: 0.5,
+                                        height: 0.15
+                                    });
+                                    const textMat = new THREE.MeshStandardMaterial({ color: 0x00cc66, emissive: 0x00cc66, emissiveIntensity: 0.8 });
+                                    if (textMesh) scene.remove(textMesh);
+                                    textMesh = new THREE.Mesh(textGeo, textMat);
+                                    textMesh.position.set(character.position.x, character.position.y + 1.5, character.position.z);
+                                    scene.add(textMesh);
+                                    charIndex++;
+                                },
+                                undefined,
+                                (error) => console.error('Font load error:', error)
+                            );
+                        }
+                    },
+                    onComplete: () => {
+                        gsap.to(character.position, { x: -15, z: 5, duration: 6, ease: 'power2.in', onUpdate: rollAndThrow });
+                    }
+                });
+            }
+
+            // Magical blush cursor
+            let blush;
+            try {
+                const blushGeometry = new THREE.BufferGeometry();
+                const blushCount = 350;
+                const blushPos = new Float32Array(blushCount * 3);
+                const blushOffsets = new Float32Array(blushCount * 3);
+                const blushSparks = new Float32Array(blushCount);
+                for (let i = 0; i < blushCount * 3; i += 3) {
+                    const theta = Math.random() * 2 * Math.PI;
+                    const phi = Math.acos(2 * Math.random() - 1);
+                    const r = 0.8 * Math.random();
+                    blushPos[i] = r * Math.sin(phi) * Math.cos(theta);
+                    blushPos[i + 1] = r * Math.sin(phi) * Math.sin(theta);
+                    blushPos[i + 2] = r * Math.cos(phi);
+                    blushOffsets[i] = Math.random() * 0.3;
+                    blushOffsets[i + 1] = Math.random() * 0.3;
+                    blushOffsets[i + 2] = Math.random() * 0.3;
+                    blushSparks[i / 3] = Math.random();
+                }
+                blushGeometry.setAttribute('position', new THREE.BufferAttribute(blushPos, 3));
+                blushGeometry.setAttribute('offset', new THREE.BufferAttribute(blushOffsets, 3));
+                blushGeometry.setAttribute('spark', new THREE.BufferAttribute(blushSparks, 1));
+                const blushMaterial = new THREE.PointsMaterial({
+                    size: 0.12,
+                    color: 0x00cc66,
+                    transparent: true,
+                    opacity: 1.0,
+                    blending: THREE.AdditiveBlending
+                });
+                blush = new THREE.Points(blushGeometry, blushMaterial);
+                blush.position.set(0, 0, 7);
+                scene.add(blush);
+                magicalCursor();
+
+                const trailGeometry = new THREE.BufferGeometry();
+                const trailCount = 100;
+                const trailPos = new Float32Array(trailCount * 3);
+                let trailIndex = 0;
+                for (let i = 0; i < trailCount * 3; i++) {
+                    trailPos[i] = 0;
+                }
+                trailGeometry.setAttribute('position', new THREE.BufferAttribute(trailPos, 3));
+                const trailMaterial = new THREE.PointsMaterial({
+                    size: 0.08,
+                    color: 0x33ff99,
+                    transparent: true,
+                    opacity: 0.85,
+                    blending: THREE.AdditiveBlending
+                });
+                const trail = new THREE.Points(trailGeometry, trailMaterial);
+                scene.add(trail);
+
+                const mouse = { x: 0, y: 0 };
+                window.addEventListener('mousemove', (event) => {
+                    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+                    gsap.to(blush.position, {
+                        x: mouse.x * 10,
+                        y: mouse.y * 10,
+                        z: 7,
+                        duration: 0.4,
+                        ease: 'elastic.out(1, 0.4)'
+                    });
+                    trailPos[trailIndex * 3] = mouse.x * 10;
+                    trailPos[trailIndex * 3 + 1] = mouse.y * 10;
+                    trailPos[trailIndex * 3 + 2] = 7;
+                    trailIndex = (trailIndex + 1) % trailCount;
+                    trailGeometry.attributes.position.needsUpdate = true;
+                    gsap.to(trailMaterial, { opacity: 0.6, duration: 1.5, ease: 'power2.out' });
+                    console.log('Magical cursor moved:', mouse.x, mouse.y);
+                });
+                console.log('Magical blush cursor added');
+            } catch (e) {
+                console.error('Blush cursor setup failed:', e);
+            }
+
+            function magicalCursor() {
+                gsap.to(blush.scale, {
+                    x: 2.3,
+                    y: 2.3,
+                    z: 2.3,
+                    duration: 0.7,
+                    repeat: -1,
+                    yoyo: true,
+                    ease: 'elastic.out(1, 0.5)'
+                });
+                gsap.to(blush.material, {
+                    opacity: 1.3,
+                    duration: 1.2,
+                    repeat: -1,
+                    yoyo: true,
+                    ease: 'sine.inOut'
+                });
+                gsap.to(blush.rotation, {
+                    z: Math.PI * 2.5,
+                    y: Math.random() * 0.6,
+                    duration: 10,
+                    repeat: -1,
+                    ease: 'power2.inOut'
+                });
+            }
+
+            function animate() {
+                try {
+                    requestAnimationFrame(animate);
+                    if (composer) {
+                        composer.render();
+                    } else {
+                        renderer.render(scene, camera);
+                    }
+                    // Update galaxy and neural
+                    if (galaxy) {
+                        const galaxyPos = galaxyGeometry.attributes.position.array;
+                        for (let i = 0; i < galaxyCount * 3; i += 3) {
+                            galaxyPos[i + 1] += Math.sin(Date.now() * 0.001 + i) * 0.02;
+                            if (galaxyPos[i + 1] > 10) galaxyPos[i + 1] = -10;
+                        }
+                        galaxyGeometry.attributes.position.needsUpdate = true;
+                    }
+                    if (neural) {
+                        const neuralPos = neuralGeometry.attributes.position.array;
+                        for (let i = 0; i < neuralCount * 3; i += 3) {
+                            neuralPos[i] += Math.cos(Date.now() * 0.002 + i) * 0.05;
+                            neuralPos[i + 1] += Math.sin(Date.now() * 0.002 + i) * 0.05;
+                            if (Math.hypot(neuralPos[i], neuralPos[i + 1]) > 10) {
+                                neuralPos[i] = (Math.random() - 0.5) * 10;
+                                neuralPos[i + 1] = (Math.random() - 0.5) * 10;
+                            }
+                        }
+                        neuralGeometry.attributes.position.needsUpdate = true;
+                    }
+                } catch (e) {
+                    console.error('Animation frame failed:', e);
+                }
+            }
+
+            try {
+                animate();
+                console.log('Animation loop started');
+            } catch (e) {
+                console.error('Animation start failed:', e);
+            }
+
+            window.addEventListener('resize', () => {
+                try {
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                    if (composer) composer.setSize(window.innerWidth, window.innerHeight);
+                    console.log('Window resized');
+                } catch (e) {
+                    console.error('Resize handler failed:', e);
+                }
+            });
+
+            return true;
+        }
+
+        const success = initLoadingPage();
+        if (!success) {
+            console.error('Loading page initialization failed');
+        } else {
+            console.log('Loading page initialized successfully');
+        }
+    </script>
+</body>
+</html>

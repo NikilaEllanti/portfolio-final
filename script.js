@@ -587,6 +587,104 @@ function initEventTracking() {
     });
 }
 
+// Text Analysis Function
+function analyzeText() {
+    const message = document.getElementById('message').value;
+    const resultsDiv = document.getElementById('analysis-results');
+
+    if (!message.trim()) {
+        resultsDiv.innerHTML = '<p>Please enter some text to analyze.</p>';
+        return;
+    }
+
+    // 1. Calculate basic statistics
+    const letters = message.match(/[a-zA-Z]/g)?.length || 0;
+    const words = message.match(/\b\w+\b/g)?.length || 0;
+    const spaces = message.match(/\s/g)?.length || 0;
+    const newlines = message.match(/\n/g)?.length || 0;
+    const specialSymbols = message.match(/[^a-zA-Z0-9\s\n]/g)?.length || 0;
+
+    // 2. Tokenize and count pronouns
+    const pronouns = ['i', 'me', 'my', 'mine', 'you', 'your', 'yours', 'he', 'him', 'his', 'she', 'her', 'hers', 'it', 'its', 'we', 'us', 'our', 'ours', 'they', 'them', 'their', 'theirs'];
+    const pronounCounts = {};
+    pronouns.forEach(pronoun => pronounCounts[pronoun] = 0);
+
+    // 3. Tokenize and count prepositions
+    const prepositions = ['about', 'above', 'across', 'after', 'against', 'along', 'among', 'around', 'at', 'before', 'behind', 'below', 'beneath', 'beside', 'between', 'beyond', 'by', 'despite', 'down', 'during', 'except', 'for', 'from', 'in', 'into', 'near', 'of', 'off', 'on', 'onto', 'over', 'past', 'through', 'to', 'toward', 'under', 'until', 'up', 'upon', 'with', 'within', 'without'];
+    const prepositionCounts = {};
+    prepositions.forEach(prep => prepositionCounts[prep] = 0);
+
+    // 4. Tokenize and count indefinite articles
+    const articles = ['a', 'an'];
+    const articleCounts = {};
+    articles.forEach(article => articleCounts[article] = 0);
+
+    // Tokenize text
+    const tokens = message.toLowerCase().match(/\b\w+\b/g) || [];
+    tokens.forEach(token => {
+        if (pronouns.includes(token)) {
+            pronounCounts[token]++;
+        }
+        if (prepositions.includes(token)) {
+            prepositionCounts[token]++;
+        }
+        if (articles.includes(token)) {
+            articleCounts[token]++;
+        }
+    });
+
+    // Generate HTML for results
+    let resultsHTML = `
+        <h3>Text Analysis Results</h3>
+        <div class="analysis-section">
+            <h4>Basic Statistics</h4>
+            <p>Letters: ${letters}</p>
+            <p>Words: ${words}</p>
+            <p>Spaces: ${spaces}</p>
+            <p>Newlines: ${newlines}</p>
+            <p>Special Symbols: ${specialSymbols}</p>
+        </div>
+        <div class="analysis-section">
+            <h4>Pronouns</h4>
+            <ul>
+    `;
+    for (const [pronoun, count] of Object.entries(pronounCounts)) {
+        if (count > 0) {
+            resultsHTML += `<li>${pronoun}: ${count}</li>`;
+        }
+    }
+    resultsHTML += `
+            </ul>
+        </div>
+        <div class="analysis-section">
+            <h4>Prepositions</h4>
+            <ul>
+    `;
+    for (const [prep, count] of Object.entries(prepositionCounts)) {
+        if (count > 0) {
+            resultsHTML += `<li>${prep}: ${count}</li>`;
+        }
+    }
+    resultsHTML += `
+            </ul>
+        </div>
+        <div class="analysis-section">
+            <h4>Indefinite Articles</h4>
+            <ul>
+    `;
+    for (const [article, count] of Object.entries(articleCounts)) {
+        if (count > 0) {
+            resultsHTML += `<li>${article}: ${count}</li>`;
+        }
+    }
+    resultsHTML += `
+            </ul>
+        </div>
+    `;
+
+    resultsDiv.innerHTML = resultsHTML;
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     initNeuralBackground();

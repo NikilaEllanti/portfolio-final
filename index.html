@@ -283,11 +283,13 @@
                         <input type="email" id="email" name="email" required>
                     </div>
                     <div class="form-group">
-                        <label for="message">Message</label>
-                        <textarea id="message" name="message" rows="5" required></textarea>
+                        <label for="message">Message (Enter text to analyze, supports 10,000+ words)</label>
+                        <textarea id="message" name="message" rows="10" required></textarea>
                     </div>
                     <button type="submit" class="btn send-btn">Send</button>
+                    <button type="button" class="btn analyze-btn" onclick="analyzeText()">Analyze Text</button>
                 </form>
+                <div id="analysis-results" class="analysis-results"></div>
                 <div class="social-links">
                     <a href="https://github.com/NikilaEllanti" target="_blank"><i class="fab fa-github"></i></a>
                     <a href="https://www.linkedin.com/in/nikila-ellanti-761b6a34a?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app" target="_blank"><i class="fab fa-linkedin"></i></a>

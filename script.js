@@ -1,4 +1,4 @@
-// DOM Elements
+/* DOM Elements */
 const header = document.querySelector('header');
 const navLinks = document.querySelectorAll('nav ul li a');
 const contactForm = document.getElementById('contact-form');
@@ -515,6 +515,78 @@ if (contactForm) {
     });
 }
 
+// Event Tracking Function
+function initEventTracking() {
+    // Helper function to determine the type of event object
+    function getEventObjectType(element) {
+        if (element.tagName === 'A') {
+            if (element.classList.contains('mobile-menu-toggle') || element.closest('nav')) return 'nav-link';
+            if (element.classList.contains('btn')) return 'button';
+            if (element.classList.contains('social-links')) return 'social-link';
+            return 'link';
+        }
+        if (element.tagName === 'BUTTON') {
+            if (element.classList.contains('mobile-menu-toggle')) return 'menu-toggle';
+            if (element.classList.contains('send-btn')) return 'submit-button';
+            return 'button';
+        }
+        if (element.tagName === 'IMG') return 'image';
+        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') return 'form-input';
+        if (element.tagName === 'CANVAS') return 'canvas';
+        if (element.classList.contains('timeline-item')) return 'timeline-item';
+        if (element.classList.contains('skill-card')) return 'skill-card';
+        if (element.classList.contains('achievement-block')) return 'achievement-block';
+        if (element.classList.contains('github-card')) return 'github-card';
+        if (element.classList.contains('dashboard-item')) return 'dashboard-item';
+        if (element.tagName === 'DIV' || element.tagName === 'P' || element.tagName === 'SPAN' || element.tagName === 'H1' || element.tagName === 'H2' || element.tagName === 'H3') return 'text';
+        return 'element';
+    }
+
+    // Click event listener for the entire document
+    document.addEventListener('click', (e) => {
+        const timestamp = new Date().toISOString();
+        const eventType = 'click';
+        const eventObject = getEventObjectType(e.target);
+        console.log(`${timestamp}, ${eventType}, ${eventObject}`);
+    });
+
+    // Intersection Observer for page view tracking
+    const observerOptions = {
+        root: null,
+        threshold: 0.5 // Trigger when 50% of the section is visible
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const timestamp = new Date().toISOString();
+                const eventType = 'view';
+                let eventObject = 'section';
+                
+                // Identify specific sections
+                if (entry.target.id === 'home') eventObject = 'hero-section';
+                else if (entry.target.id === 'about') eventObject = 'about-section';
+                else if (entry.target.id === 'birthplace') eventObject = 'birthplace-section';
+                else if (entry.target.id === 'education') eventObject = 'education-section';
+                else if (entry.target.id === 'achievements') eventObject = 'achievements-section';
+                else if (entry.target.id === 'github') eventObject = 'github-section';
+                else if (entry.target.id === 'skills') eventObject = 'skills-section';
+                else if (entry.target.id === 'contact') eventObject = 'contact-section';
+                
+                console.log(`${timestamp}, ${eventType}, ${eventObject}`);
+                
+                // Optional: Unobserve after first view to avoid repeated logs
+                observer.unobserve(entry.target);
+            }
+        });
+    }, observerOptions);
+
+    // Observe all sections
+    document.querySelectorAll('section').forEach(section => {
+        observer.observe(section);
+    });
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     initNeuralBackground();
@@ -524,6 +596,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initBirthplaceFloating();
     updateNavActive();
     handleScrollAnimations();
+    initEventTracking();
 
     window.addEventListener('scroll', () => {
         updateHeaderOnScroll();
